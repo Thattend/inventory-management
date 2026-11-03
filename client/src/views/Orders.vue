@@ -8,8 +8,11 @@
     </div>
 
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else class="page-sections">
+    <div v-else-if="error" class="error error-action" role="alert">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-secondary btn-sm" @click="loadOrders">{{ t('common.retry') }}</button>
+    </div>
+    <div v-else class="page-sections" :class="{ 'is-refreshing': refreshing }" :aria-busy="refreshing">
       <div class="stats-grid">
         <div class="stat-card success">
           <div class="stat-label">{{ t('status.delivered') }}</div>
@@ -94,7 +97,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id">
+              <!-- order ids are not unique in the data; a duplicate key makes Vue duplicate rows on refresh -->
+              <tr v-for="order in orders" :key="`${order.id}|${order.customer}|${order.order_date}`">
                 <td class="col-order-number"><strong>{{ order.order_number }}</strong></td>
                 <td class="col-customer">{{ translateCustomerName(order.customer) }}</td>
                 <td class="col-items">
@@ -128,10 +132,11 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
+import { useLatestLoad } from '../composables/useLatestLoad'
 import { formatCurrencyWithDecimals } from '../utils/currency'
 
 export default {
@@ -142,8 +147,9 @@ export default {
     const currencySymbol = computed(() => {
       return currentCurrency.value === 'JPY' ? '¥' : '$'
     })
-    const loading = ref(true)
-    const error = ref(null)
+    const { loading, refreshing, error, run, invalidate } = useLatestLoad({
+      describeError: (err) => 'Failed to load orders: ' + err.message
+    })
     const orders = ref([])
     const restockOrders = ref([])
 
@@ -156,24 +162,18 @@ export default {
       getCurrentFilters
     } = useFilters()
 
-    const loadOrders = async () => {
-      try {
-        loading.value = true
-        const filters = getCurrentFilters()
-        const fetchedOrders = await api.getOrders(filters)
-
-        // Sort orders by order_date (earliest first)
-        orders.value = fetchedOrders.sort((a, b) => {
+    // run() drops results of superseded requests (stale filter responses)
+    const loadOrders = () => run(
+      () => api.getOrders(getCurrentFilters()),
+      (fetchedOrders) => {
+        // Sort orders by order_date (earliest first) on a copy, not the API result
+        orders.value = [...fetchedOrders].sort((a, b) => {
           const dateA = new Date(a.order_date)
           const dateB = new Date(b.order_date)
           return dateA - dateB
         })
-      } catch (err) {
-        error.value = 'Failed to load orders: ' + err.message
-      } finally {
-        loading.value = false
       }
-    }
+    )
 
     // Watch for filter changes and reload data
     watch([selectedPeriod, selectedLocation, selectedCategory, selectedStatus], () => {
@@ -217,6 +217,8 @@ export default {
       }
     }
 
+    onBeforeUnmount(invalidate)
+
     onMounted(() => {
       loadOrders()
       loadRestockOrders()
@@ -225,7 +227,9 @@ export default {
     return {
       t,
       loading,
+      refreshing,
       error,
+      loadOrders,
       orders,
       restockOrders,
       currentCurrency,

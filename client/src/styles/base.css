@@ -214,3 +214,20 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   margin: var(--space-4) 0;
   font-size: var(--text-base);
 }
+
+/* Content kept on screen while a filter change re-fetches (see
+   composables/useLatestLoad.js): dimmed and inert so the user can see that new
+   data is on its way and cannot act on rows that are about to change. */
+.is-refreshing {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+/* Error box with a retry button on the right */
+.error.error-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}

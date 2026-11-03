@@ -8,8 +8,11 @@
     </div>
 
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else>
+    <div v-else-if="error" class="error error-action" role="alert">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-secondary btn-sm" @click="loadInventory">{{ t('common.retry') }}</button>
+    </div>
+    <div v-else :class="{ 'is-refreshing': refreshing }" :aria-busy="refreshing">
       <!-- Flush card: the table runs edge to edge; header padding comes from .card--flush -->
       <div class="card card--flush">
         <div class="card-header">
@@ -103,10 +106,11 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
+import { useLatestLoad } from '../composables/useLatestLoad'
 import InventoryDetailModal from '../components/InventoryDetailModal.vue'
 import { toCsv, downloadCsv, buildCsvFilename } from '../utils/csv'
 
@@ -122,8 +126,9 @@ export default {
       return currentCurrency.value === 'JPY' ? '¥' : '$'
     })
 
-    const loading = ref(true)
-    const error = ref(null)
+    const { loading, refreshing, error, run, invalidate } = useLatestLoad({
+      describeError: (err) => 'Failed to load inventory: ' + err.message
+    })
     const items = ref([])
     const searchQuery = ref('')
 
@@ -169,21 +174,18 @@ export default {
       })
     })
 
-    const loadInventory = async () => {
-      try {
-        loading.value = true
+    // run() drops results of superseded requests (stale filter responses)
+    const loadInventory = () => run(
+      () => {
         const filters = getCurrentFilters()
         // Inventory doesn't support month/status filters, only warehouse and category
-        items.value = await api.getInventory({
+        return api.getInventory({
           warehouse: filters.warehouse,
           category: filters.category
         })
-      } catch (err) {
-        error.value = 'Failed to load inventory: ' + err.message
-      } finally {
-        loading.value = false
-      }
-    }
+      },
+      (data) => { items.value = data }
+    )
 
     // Watch for filter changes and reload data
     watch([selectedLocation, selectedCategory], () => {
@@ -241,12 +243,15 @@ export default {
     }
 
     onMounted(loadInventory)
+    onBeforeUnmount(invalidate)
 
     return {
       exportCsv,
       t,
       loading,
+      refreshing,
       error,
+      loadInventory,
       items,
       searchQuery,
       filteredItems,
