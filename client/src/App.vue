@@ -28,6 +28,7 @@
         </button>
         <div class="topbar-title">{{ currentTitle }}</div>
         <div class="topbar-actions">
+          <ThemeToggle />
           <LanguageSwitcher />
           <ProfileMenu
             @show-profile-details="showProfileDetails = true"
@@ -71,6 +72,7 @@ import ProfileMenu from './components/ProfileMenu.vue'
 import ProfileDetailsModal from './components/ProfileDetailsModal.vue'
 import TasksModal from './components/TasksModal.vue'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 
 export default {
   name: 'App',
@@ -80,7 +82,8 @@ export default {
     ProfileMenu,
     ProfileDetailsModal,
     TasksModal,
-    LanguageSwitcher
+    LanguageSwitcher,
+    ThemeToggle
   },
   setup() {
     const { currentUser } = useAuth()

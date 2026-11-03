@@ -387,6 +387,12 @@ export default {
     errLoad: '発注書の読み込みに失敗しました'
   },
 
+  // Theme
+  theme: {
+    switchToDark: 'ダークモードに切り替え',
+    switchToLight: 'ライトモードに切り替え'
+  },
+
   // Language
   language: {
     english: 'English',
