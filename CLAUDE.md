@@ -64,7 +64,7 @@ npm install && npm run dev
 
 ## File Locations
 - Views: `client/src/views/*.vue`
-- API Client: `client/src/api.js`
+- API Client: @client/src/api.js
 - Backend: `server/main.py`, `server/mock_data.py`
 - Data: `server/data/*.json`
 - Styles: `client/src/App.vue`
