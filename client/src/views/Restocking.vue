@@ -1,13 +1,15 @@
 <template>
   <div class="restocking">
     <div class="page-header">
-      <h2>{{ t('restocking.title') }}</h2>
-      <p>{{ t('restocking.description') }}</p>
+      <div>
+        <h2 class="page-title">{{ t('restocking.title') }}</h2>
+        <p class="page-description">{{ t('restocking.description') }}</p>
+      </div>
     </div>
 
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
     <div v-else-if="!loaded" class="error">{{ error }}</div>
-    <div v-else>
+    <div v-else class="page-sections">
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">{{ t('restocking.budgetTitle') }}</h3>
@@ -50,18 +52,19 @@
         </div>
       </div>
 
-      <div v-if="orderResult" class="banner success-banner">
+      <div v-if="orderResult" class="banner success-banner" role="status">
         <span>{{ t('restocking.orderPlaced', { orderNumber: orderResult.order_number }) }}</span>
         <router-link to="/orders">{{ t('restocking.viewOrder') }}</router-link>
       </div>
       <div v-if="error" class="error">{{ error }}</div>
 
-      <div class="card">
-        <div class="card-header header-row">
+      <!-- Flush card: the table runs edge to edge; header padding comes from .card--flush -->
+      <div class="card card--flush">
+        <div class="card-header">
           <h3 class="card-title">{{ t('restocking.recommendations') }} ({{ lines.length }})</h3>
           <button
             type="button"
-            class="place-order"
+            class="btn btn-primary"
             :disabled="lines.length === 0 || submitting || refreshing"
             @click="placeOrder"
           >
@@ -240,87 +243,74 @@ export default {
 </script>
 
 <style scoped>
+/* Page header, cards, stat tiles, tables, badges, buttons and states come from styles/base.css. */
+
+/* Vertical rhythm: one gap between sections instead of per-element margins */
+.page-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.page-sections > * {
+  margin: 0;
+}
+
+/* Slider on the left, readout tiles on the right; stacks below 900px (see media query) */
 .budget-layout {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) 2fr;
-  gap: 1.5rem;
+  gap: var(--space-6);
   align-items: center;
 }
 
 .slider-label {
   display: block;
-  font-size: 0.813rem;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
 }
 
 .budget-slider {
   width: 100%;
-  accent-color: #0f172a;
+  accent-color: var(--color-primary);
 }
 
 .slider-scale {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  color: #64748b;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
+/* Readout tiles sit inside the budget card, so drop the grid's own bottom margin */
 .readout {
   margin-bottom: 0;
-}
-
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.place-order {
-  background: #0f172a;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1.25rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.place-order:disabled {
-  background: #e2e8f0;
-  color: #64748b;
-  cursor: not-allowed;
-}
-
-.num {
-  text-align: right;
-}
-
-.empty-state {
-  padding: 2rem;
-  text-align: center;
-  color: #64748b;
 }
 
 .banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
 }
 
+/* No --color-success-border token exists yet; derive a light border from the success color */
 .success-banner {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: var(--color-success-soft);
+  color: var(--color-success-text);
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
 }
 
 .success-banner a {
-  color: #065f46;
-  font-weight: 600;
+  color: var(--color-success-text);
+  font-weight: var(--weight-semibold);
   text-decoration: underline;
 }
 

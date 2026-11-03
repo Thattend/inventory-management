@@ -93,83 +93,102 @@ const selectLanguage = (locale) => {
   position: relative;
 }
 
+/* Top-bar trigger button: same height as .btn so it lines up with other top-bar controls */
 .language-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  gap: var(--space-2);
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  font-size: 0.875rem;
-  color: #334155;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .language-button:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
 }
 
-.globe-icon {
-  color: #64748b;
-  flex-shrink: 0;
-}
-
-.language-label {
-  font-weight: 500;
+.language-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .chevron {
-  color: #64748b;
-  transition: transform 0.2s ease;
   flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: transform var(--transition-base);
 }
 
 .chevron-open {
   transform: rotate(180deg);
 }
 
+/* Dropdown panel. z-index 1000 is kept on purpose: it is local to the top bar's
+   stacking context (--z-topbar), so it only needs to beat siblings inside the top bar;
+   the top bar itself sits above the filter sub-bar, so the panel overlays it. */
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: calc(100% + var(--space-2));
   right: 0;
   min-width: 160px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: var(--space-1) 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
   overflow: hidden;
 }
 
 .dropdown-item {
-  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
   background: none;
   border: none;
   text-align: left;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: background 0.15s ease;
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
+  transition: background var(--transition-fast);
 }
 
 .dropdown-item:hover {
-  background: #f8fafc;
+  background: var(--color-surface-muted);
+}
+
+.dropdown-item:focus-visible {
+  outline: none;
+  background: var(--color-surface-muted);
+}
+
+.globe-icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.language-label {
+  font-weight: var(--weight-medium);
+}
+
+.dropdown-item {
+  justify-content: space-between;
 }
 
 .dropdown-item.active {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .language-name {
@@ -177,7 +196,7 @@ const selectLanguage = (locale) => {
 }
 
 .check-icon {
-  color: #2563eb;
   flex-shrink: 0;
+  color: var(--color-primary);
 }
 </style>
