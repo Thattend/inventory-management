@@ -26,8 +26,8 @@
 
             <!-- View mode -->
             <template v-if="mode === 'view'">
-              <div v-if="loadingPO" class="state-text">{{ t('common.loading') }}</div>
-              <div v-else-if="loadError" class="error-banner">{{ loadError }}</div>
+              <div v-if="loadingPO" class="loading">{{ t('common.loading') }}</div>
+              <div v-else-if="loadError" class="error">{{ loadError }}</div>
               <div v-else-if="po" class="info-grid">
                 <div class="info-item">
                   <div class="info-label">{{ t('purchaseOrder.poId') }}</div>
@@ -70,7 +70,7 @@
 
             <!-- Create mode -->
             <form v-else id="po-form" class="po-form" @submit.prevent="submit" novalidate>
-              <div v-if="submitError" class="error-banner">{{ submitError }}</div>
+              <div v-if="submitError" class="error">{{ submitError }}</div>
 
               <div class="field">
                 <label for="po-supplier">{{ t('purchaseOrder.supplierName') }}</label>
@@ -111,12 +111,12 @@
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn-secondary" @click="close">{{ t('common.close') }}</button>
+            <button type="button" class="btn btn-secondary" @click="close">{{ t('common.close') }}</button>
             <button
               v-if="mode !== 'view'"
               type="submit"
               form="po-form"
-              class="btn-primary"
+              class="btn btn-primary"
               :disabled="!isValid || submitting"
             >
               {{ submitting ? t('purchaseOrder.submitting') : t('purchaseOrder.submit') }}
@@ -258,246 +258,97 @@ export default {
 </script>
 
 <style scoped>
+/* ---- Modal shell: identical block in every modal component ----
+   Modals are teleported to <body>, so --z-modal (100) only has to beat the app shell
+   layers (top bar 20, sidebar 30, mobile drawer 50) defined in tokens.css. */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
+  padding: var(--space-4);
+  background: var(--color-overlay);
+  z-index: var(--z-modal);
 }
 
+/* Header and footer stay fixed; only .modal-body scrolls inside the 90vh cap */
 .modal-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  /* Per-modal width; tokens define no component widths, so this stays literal */
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.025em;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
+/* Square icon button, same height as .btn so the header row stays aligned */
 .close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
   background: none;
   border: none;
-  color: #64748b;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
   cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
-  border-radius: 6px;
-  transition: all 0.15s ease;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .close-button:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.close-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
-}
-
-.item-summary {
-  padding-bottom: 1rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.item-name {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 0.25rem;
-}
-
-.item-meta {
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
-.sep {
-  margin: 0 0.5rem;
-}
-
-.mono {
-  font-family: 'Monaco', 'Courier New', monospace;
-}
-
-.po-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-  flex: 1;
-}
-
-.field-row {
-  display: flex;
-  gap: 1rem;
-}
-
-.field label {
-  font-size: 0.813rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
-}
-
-.field input,
-.field textarea {
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.938rem;
-  font-family: inherit;
-  color: #0f172a;
-  resize: vertical;
-}
-
-.field input:focus,
-.field textarea:focus {
-  outline: none;
-  border-color: #64748b;
-}
-
-.field-error {
-  font-size: 0.813rem;
-  color: #dc2626;
-}
-
-.error-banner {
-  padding: 0.75rem 1rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #991b1b;
-  font-size: 0.875rem;
-}
-
-.state-text {
-  color: #64748b;
-  padding: 1rem 0;
-}
-
-.total-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  color: #0f172a;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.info-item.full {
-  grid-column: 1 / -1;
-}
-
-.info-label {
-  font-size: 0.813rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
-}
-
-.info-value {
-  font-size: 0.938rem;
-  color: #0f172a;
-  font-weight: 500;
-}
-
-.info-value.notes {
-  white-space: pre-wrap;
-  font-weight: 400;
+  padding: var(--space-6);
 }
 
 .modal-footer {
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border);
 }
 
-.btn-secondary,
-.btn-primary {
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-
-.btn-secondary {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #334155;
-}
-
-.btn-secondary:hover {
-  background: #e2e8f0;
-}
-
-.btn-primary {
-  background: #0f172a;
-  border: 1px solid #0f172a;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #1e293b;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
+/* Modal transition: fade the overlay, scale the panel slightly */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-base);
 }
 
 .modal-enter-from,
@@ -507,11 +358,145 @@ export default {
 
 .modal-enter-active .modal-container,
 .modal-leave-active .modal-container {
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-base);
 }
 
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
   transform: scale(0.95);
+}
+
+.item-summary {
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item-name {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.item-meta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.sep {
+  margin: 0 var(--space-2);
+  color: var(--color-text-subtle);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.po-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* The form already spaces children with gap; drop the shared .error margin to avoid doubling */
+.po-form > .error {
+  margin: 0;
+}
+
+.field-row {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.field input,
+.field textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  resize: vertical;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Single-line inputs share the button height so the form lines up with .btn */
+.field input {
+  height: var(--control-height);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.field-error {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.info-item.full {
+  grid-column: 1 / -1;
+}
+
+.info-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.info-value {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+}
+
+.info-value.notes {
+  white-space: pre-wrap;
+  font-weight: var(--weight-regular);
 }
 </style>

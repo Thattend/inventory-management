@@ -6,6 +6,14 @@ export default {
     orders: 'Orders',
     finance: 'Finance',
     demandForecast: 'Demand Forecast',
+    sectionOperations: 'Operations',
+    sectionFinance: 'Finance & Reports',
+    reports: 'Reports',
+    skipToContent: 'Skip to content',
+    openNavigation: 'Open navigation',
+    closeNavigation: 'Close navigation',
+    collapseSidebar: 'Collapse sidebar',
+    expandSidebar: 'Expand sidebar',
     restocking: 'Restocking',
     companyName: 'Catalyst Components',
     subtitle: 'Inventory Management System'
@@ -14,6 +22,7 @@ export default {
   // Dashboard
   dashboard: {
     title: 'Overview',
+    description: 'Key metrics, order health, and inventory shortages at a glance',
     kpi: {
       title: 'Key Performance Indicators',
       inventoryTurnover: 'Inventory Turnover Rate',
@@ -45,6 +54,7 @@ export default {
     },
     inventoryShortages: {
       title: 'Inventory Shortages',
+      actions: 'Actions',
       noShortages: 'No inventory shortages - all orders can be fulfilled!',
       noData: 'No inventory data for selected filters',
       orderId: 'Order ID',

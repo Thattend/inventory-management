@@ -120,87 +120,135 @@ const handleLogout = () => {
   position: relative;
 }
 
+/* Top-bar trigger button: same height as .btn so it lines up with other top-bar controls */
 .profile-button {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.875rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  gap: var(--space-2);
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .profile-button:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
 }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.75rem;
-  letter-spacing: 0.025em;
-}
-
-.profile-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #0f172a;
+.profile-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .chevron {
-  color: #64748b;
-  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: transform var(--transition-base);
 }
 
 .chevron-open {
   transform: rotate(180deg);
 }
 
+/* Dropdown panel. z-index 1000 is kept on purpose: it is local to the top bar's
+   stacking context (--z-topbar), so it only needs to beat siblings inside the top bar;
+   the top bar itself sits above the filter sub-bar, so the panel overlays it. */
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: calc(100% + var(--space-2));
   right: 0;
   min-width: 280px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: var(--space-1) 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
   overflow: hidden;
 }
 
-.dropdown-header {
-  padding: 1rem;
+.dropdown-item {
   display: flex;
-  gap: 0.875rem;
   align-items: center;
-  background: #f8fafc;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: none;
+  text-align: left;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
-.avatar-large {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color: white;
+.dropdown-item:hover {
+  background: var(--color-surface-muted);
+}
+
+.dropdown-item:focus-visible {
+  outline: none;
+  background: var(--color-surface-muted);
+}
+
+/* Trigger is a fixed 36px tall; shrink the left padding so the avatar sits near the edge */
+.profile-button {
+  padding-left: var(--space-1);
+}
+
+/* 28px avatar fits inside the 36px trigger with --space-1 breathing room */
+.avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1rem;
+  width: calc(var(--control-height) - var(--space-2));
+  height: calc(var(--control-height) - var(--space-2));
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.025em;
+}
+
+.profile-name {
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+}
+
+/* Negative top margin cancels the menu's --space-1 top padding so the tinted header touches the panel edge */
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: calc(-1 * var(--space-1));
+  padding: var(--space-4);
+  background: var(--color-bg);
+}
+
+/* 48px = --space-12 */
+.avatar-large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: var(--space-12);
+  height: var(--space-12);
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.025em;
 }
 
 .user-info {
@@ -209,73 +257,52 @@ const handleLogout = () => {
 }
 
 .user-name {
-  font-weight: 600;
-  color: #0f172a;
-  font-size: 0.938rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
 }
 
 .user-email {
-  font-size: 0.813rem;
-  color: #64748b;
   overflow: hidden;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .dropdown-divider {
   height: 1px;
-  background: #e2e8f0;
-  margin: 0.5rem 0;
-}
-
-.dropdown-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
-}
-
-.dropdown-item:hover {
-  background: #f8fafc;
+  margin: var(--space-1) 0;
+  background: var(--color-border);
 }
 
 .dropdown-item svg {
-  color: #64748b;
   flex-shrink: 0;
+  color: var(--color-text-muted);
 }
 
-.dropdown-item.logout {
-  color: #dc2626;
-}
-
+.dropdown-item.logout,
 .dropdown-item.logout svg {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 .dropdown-item.logout:hover {
-  background: #fef2f2;
+  background: var(--color-danger-soft);
 }
 
+/* Pill counter pushed to the right edge of the "My tasks" row */
 .task-badge {
+  min-width: var(--space-5);
   margin-left: auto;
-  background: #2563eb;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.125rem 0.5rem;
-  border-radius: 12px;
-  min-width: 20px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--space-5);
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 </style>

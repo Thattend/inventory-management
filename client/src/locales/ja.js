@@ -6,6 +6,14 @@ export default {
     orders: '注文',
     finance: '財務',
     demandForecast: '需要予測',
+    sectionOperations: 'オペレーション',
+    sectionFinance: '財務・レポート',
+    reports: 'レポート',
+    skipToContent: 'メインコンテンツへ移動',
+    openNavigation: 'ナビゲーションを開く',
+    closeNavigation: 'ナビゲーションを閉じる',
+    collapseSidebar: 'サイドバーを折りたたむ',
+    expandSidebar: 'サイドバーを展開',
     restocking: '補充発注',
     companyName: '触媒コンポーネンツ',
     subtitle: '在庫管理システム'
@@ -14,6 +22,7 @@ export default {
   // Dashboard
   dashboard: {
     title: '概要',
+    description: '主要指標、注文状況、在庫不足を一目で確認',
     kpi: {
       title: '主要業績評価指標',
       inventoryTurnover: '在庫回転率',
@@ -45,6 +54,7 @@ export default {
     },
     inventoryShortages: {
       title: '在庫不足',
+      actions: '操作',
       noShortages: '在庫不足なし - すべての注文を履行できます！',
       noData: '選択したフィルターのデータがありません',
       orderId: '注文ID',

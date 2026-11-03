@@ -1,20 +1,23 @@
 <template>
   <div class="spending">
     <div class="page-header">
-      <h2>{{ t('finance.title') }}</h2>
-      <p>{{ t('finance.description') }}</p>
+      <div>
+        <h2 class="page-title">{{ t('finance.title') }}</h2>
+        <p class="page-description">{{ t('finance.description') }}</p>
+      </div>
     </div>
 
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else>
+    <!-- .page-sections owns the vertical rhythm (gap) so cards/grids need no ad-hoc margins -->
+    <div v-else class="page-sections">
       <!-- Revenue & Financial KPIs -->
-      <div class="stats-grid-finance">
+      <div class="stats-grid">
         <div class="stat-card revenue-card">
           <div class="stat-label">{{ t('finance.totalRevenue') }}</div>
           <div class="stat-value">{{ formatCurrency(revenueMetrics.totalRevenue) }}</div>
-          <div class="stat-change positive">
-            <span class="change-icon">↑</span>
+          <div class="stat-meta stat-change positive">
+            <span class="change-icon" aria-hidden="true">↑</span>
             {{ t('finance.fromOrders', { count: revenueMetrics.orderCount }) }}
           </div>
         </div>
@@ -132,15 +135,17 @@
           <div class="card-header">
             <h3 class="card-title">{{ t('finance.transactions.title') }}</h3>
           </div>
-          <div class="transactions-table-container">
-            <table class="transactions-table">
+          <div v-if="recentTransactions.length === 0" class="empty-state">{{ t('common.noData') }}</div>
+          <!-- Fixed max-height makes the container the scroll box, so the shared sticky th sticks inside the card -->
+          <div v-else class="table-container transactions-table-container">
+            <table>
               <thead>
                 <tr>
                   <th>{{ t('finance.transactions.id') }}</th>
                   <th>{{ t('finance.transactions.description') }}</th>
                   <th>{{ t('finance.transactions.vendor') }}</th>
                   <th>{{ t('finance.transactions.date') }}</th>
-                  <th class="text-right">{{ t('finance.transactions.amount') }}</th>
+                  <th class="num">{{ t('finance.transactions.amount') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -154,7 +159,7 @@
                   <td class="transaction-description">{{ transaction.description }}</td>
                   <td class="transaction-vendor">{{ transaction.vendor }}</td>
                   <td class="transaction-date">{{ formatDateShort(transaction.date) }}</td>
-                  <td class="transaction-amount text-right">{{ currencySymbol }}{{ transaction.amount.toLocaleString() }}</td>
+                  <td class="transaction-amount num">{{ currencySymbol }}{{ transaction.amount.toLocaleString() }}</td>
                 </tr>
               </tbody>
             </table>
@@ -492,141 +497,97 @@ export default {
 </script>
 
 <style scoped>
+/*
+ * Chart series colors, defined once so legend dots and bars always match.
+ * Mapped to the status palette (blue/green/yellow/red) plus slate for revenue.
+ * Operational has no palette equivalent; a violet keeps four stacked segments
+ * distinguishable (justified exception to the token-only rule).
+ */
+.spending {
+  --series-revenue: var(--color-text);
+  --series-cost: var(--color-danger);
+  --series-procurement: var(--color-info);
+  --series-operational: #8b5cf6; /* no token: 4th distinct series color */
+  --series-labor: var(--color-success);
+  --series-overhead: var(--color-warning);
+}
+
+/* Sections stacked with one consistent gap; shared margins are reset so they don't double up */
+.page-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.page-sections > .stats-grid,
+.page-sections > .card,
+.two-column-grid > .card {
+  margin-bottom: 0;
+}
+
+/* ---------- KPI tiles ---------- */
+/* Left accent bar ties each KPI to its chart series color */
+.revenue-card { border-left: var(--space-1) solid var(--series-revenue); }
+.cost-card { border-left: var(--space-1) solid var(--series-cost); }
+.profit-card { border-left: var(--space-1) solid var(--series-procurement); }
+
 .stat-change {
-  margin-top: 0.75rem;
-  font-size: 0.875rem;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
+.stat-change.positive { color: var(--color-success-text); }
+.stat-change.negative { color: var(--color-danger-text); }
+.change-icon { font-weight: var(--weight-semibold); }
 
-.stat-change.positive {
-  color: #059669;
-}
-
-.stat-change.negative {
-  color: #dc2626;
-}
-
-.change-icon {
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.chart-card {
-  margin-bottom: 1.75rem;
-}
-
+/* ---------- Chart legend ---------- */
 .chart-legend {
   display: flex;
-  gap: 1.5rem;
-  font-size: 0.875rem;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
 }
-
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #64748b;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
 }
-
 .legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-sm);
 }
+.legend-dot.procurement { background: var(--series-procurement); }
+.legend-dot.operational { background: var(--series-operational); }
+.legend-dot.labor { background: var(--series-labor); }
+.legend-dot.overhead { background: var(--series-overhead); }
+.legend-dot.revenue-color { background: var(--series-revenue); }
+.legend-dot.cost-color { background: var(--series-cost); }
 
-.legend-dot.procurement { background: #3b82f6; }
-.legend-dot.operational { background: #8b5cf6; }
-.legend-dot.labor { background: #10b981; }
-.legend-dot.overhead { background: #f59e0b; }
-.legend-dot.revenue-color { background: #0f172a; }
-.legend-dot.cost-color { background: #ef4444; }
-
-.stats-grid-finance {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.revenue-card {
-  border-left: 4px solid #0f172a;
-}
-
-.cost-card {
-  border-left: 4px solid #ef4444;
-}
-
-.profit-card {
-  border-left: 4px solid #3b82f6;
-}
-
-.stat-meta {
-  margin-top: 0.5rem;
-  font-size: 0.813rem;
-  color: #64748b;
-}
-
-.bar-group-revenue {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-}
-
-.revenue-bars {
-  width: 100%;
-  max-width: 80px;
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  align-items: flex-end;
-  height: 100%;
-  padding-bottom: 2rem;
-}
-
-.revenue-bar, .cost-bar {
-  width: 50%;
-  max-width: 30px;
-  border-radius: 6px 6px 0 0;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  min-height: 4px;
-}
-
-.revenue-bar {
-  background: #0f172a;
-}
-
-.cost-bar {
-  background: #ef4444;
-}
-
-.revenue-bar:hover, .cost-bar:hover {
-  opacity: 0.8;
-  transform: scaleY(1.05);
-}
-
+/* ---------- Bar charts (shared frame) ---------- */
+/* 12 month labels can't shrink below their text width, so on narrow screens
+   the chart scrolls inside its card (like tables) instead of widening the page. */
 .chart-container {
-  padding: 1.5rem 0;
+  padding: var(--space-2) 0 0;
+  overflow-x: auto;
 }
 
 .bar-chart {
   display: flex;
-  gap: 1.5rem;
-  height: 350px;
+  gap: var(--space-6);
+  height: 350px; /* fixed plot height: bar heights are percentages of this box */
 }
 
 .y-axis {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-right: 1rem;
-  font-size: 0.75rem;
-  color: #94a3b8;
-  border-right: 1px solid #e2e8f0;
+  /* bottom padding matches the label row under the bars so "0" lines up with the baseline */
+  padding: 0 var(--space-4) var(--space-8) 0;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-subtle);
+  border-right: 1px solid var(--color-border);
 }
 
 .chart-area {
@@ -634,9 +595,49 @@ export default {
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
+.bar-label {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+}
+
+/* Revenue vs costs: paired bars per month */
+.bar-group-revenue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+}
+.revenue-bars {
+  width: 100%;
+  max-width: 80px; /* chart geometry cap, not spacing: keeps bars slim on wide screens */
+  display: flex;
+  gap: var(--space-1);
+  justify-content: center;
+  align-items: flex-end;
+  height: 100%;
+  padding-bottom: var(--space-8);
+}
+.revenue-bar,
+.cost-bar {
+  width: 50%;
+  max-width: 30px; /* chart geometry cap */
+  min-height: var(--space-1);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+.revenue-bar { background: var(--series-revenue); }
+.cost-bar { background: var(--series-cost); }
+.revenue-bar:hover,
+.cost-bar:hover { opacity: 0.8; }
+
+/* Monthly cost flow: stacked segments, first child at the bottom (column-reverse) */
 .bar-group {
   display: flex;
   flex-direction: column;
@@ -644,209 +645,111 @@ export default {
   flex: 1;
   height: 100%;
 }
-
 .stacked-bar {
   width: 100%;
-  max-width: 60px;
+  max-width: 60px; /* chart geometry cap */
   display: flex;
   flex-direction: column-reverse;
   align-items: stretch;
   height: 100%;
-  padding-bottom: 2rem;
+  padding-bottom: var(--space-8);
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-fast);
 }
+.stacked-bar:hover { opacity: 0.85; }
+.bar-segment { display: block; width: 100%; }
+.bar-segment:first-child { border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+.bar-segment:last-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.bar-segment.procurement { background: var(--series-procurement); }
+.bar-segment.operational { background: var(--series-operational); }
+.bar-segment.labor { background: var(--series-labor); }
+.bar-segment.overhead { background: var(--series-overhead); }
 
-.stacked-bar:hover {
-  opacity: 0.85;
-}
-
-.bar-segment {
-  width: 100%;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  display: block;
-}
-
-.bar-segment:first-child {
-  border-radius: 0 0 6px 6px;
-}
-
-.bar-segment:last-child {
-  border-radius: 6px 6px 0 0;
-}
-
-.bar-segment.procurement { background: #3b82f6; }
-.bar-segment.operational { background: #8b5cf6; }
-.bar-segment.labor { background: #10b981; }
-.bar-segment.overhead { background: #f59e0b; }
-
-.bar-segment:hover {
-  opacity: 0.8;
-}
-
-.bar-label {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-}
-
+/* ---------- Category + transactions row ---------- */
+/* min() lets the 450px column minimum collapse to full width on narrow screens instead of overflowing */
 .two-column-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-  gap: 1.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(450px, 100%), 1fr));
+  gap: var(--space-6);
 }
 
 .category-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
-
 .category-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
-
 .category-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .category-name {
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
 }
-
 .category-amount {
-  font-weight: 700;
-  color: #2563eb;
-  font-size: 1.125rem;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
 }
-
 .category-bar-container {
   width: 100%;
-  height: 8px;
-  background: #f1f5f9;
-  border-radius: 4px;
+  height: var(--space-2);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
-
 .category-bar {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-  border-radius: 4px;
-  transition: width 0.6s ease;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
 }
-
 .category-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.813rem;
+  font-size: var(--text-sm);
 }
-
-.percentage {
-  color: #64748b;
-}
-
+.percentage { color: var(--color-text-muted); }
 .change {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
 }
-
-.change.positive {
-  color: #059669;
-}
-
-.change.negative {
-  color: #dc2626;
-}
+.change.positive { color: var(--color-success-text); }
+.change.negative { color: var(--color-danger-text); }
 
 .transactions-card {
   display: flex;
   flex-direction: column;
 }
-
 .transactions-table-container {
+  max-height: 400px; /* keeps the card roughly level with the category list beside it */
   overflow-y: auto;
-  max-height: 400px;
 }
-
-.transactions-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.transactions-table thead {
-  position: sticky;
-  top: 0;
-  background: #f8fafc;
-  z-index: 1;
-}
-
-.transactions-table th {
-  text-align: left;
-  padding: 0.625rem 0.75rem;
-  font-weight: 600;
-  color: #475569;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.transactions-table th.text-right {
-  text-align: right;
-}
-
-.transactions-table td {
-  padding: 0.75rem 0.75rem;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 0.875rem;
-}
-
-.transactions-table tbody tr {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.transactions-table tbody tr:hover {
-  background: #f8fafc;
-}
-
-.transactions-table tbody tr.clickable-row:hover {
-  background: #eff6ff;
-}
-
+.clickable-row { cursor: pointer; }
 .transaction-id {
-  color: #64748b;
-  font-weight: 500;
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.813rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
 }
-
 .transaction-description {
-  color: #0f172a;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
 }
-
-.transaction-vendor {
-  color: #64748b;
-}
-
+.transaction-vendor { color: var(--color-text-muted); }
 .transaction-date {
-  color: #64748b;
-  font-size: 0.813rem;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
 }
-
 .transaction-amount {
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.text-right {
-  text-align: right;
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
 }
 </style>
