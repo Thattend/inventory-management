@@ -8,8 +8,11 @@
     </div>
 
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else class="dashboard-content">
+    <div v-else-if="error" class="error error-action" role="alert">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-secondary btn-sm" @click="loadData">{{ t('common.retry') }}</button>
+    </div>
+    <div v-else class="dashboard-content" :class="{ 'is-refreshing': refreshing }" :aria-busy="refreshing">
       <!-- Key Performance Indicators -->
       <section class="dashboard-section">
         <h3 class="section-title">{{ t('dashboard.kpi.title') }}</h3>
@@ -291,10 +294,11 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
+import { useLatestLoad } from '../composables/useLatestLoad'
 import { formatCurrency } from '../utils/currency'
 import ProductDetailModal from '../components/ProductDetailModal.vue'
 import BacklogDetailModal from '../components/BacklogDetailModal.vue'
@@ -309,8 +313,9 @@ export default {
   },
   setup() {
     const { t, currentCurrency, translateProductName, translateWarehouse } = useI18n()
-    const loading = ref(true)
-    const error = ref(null)
+    const { loading, refreshing, error, run, invalidate } = useLatestLoad({
+      describeError: (err) => 'Failed to load dashboard data: ' + err.message
+    })
     const summary = ref({})
     const allOrders = ref([])
     const inventoryItems = ref([])
@@ -554,28 +559,24 @@ export default {
       return allBacklogItems.value.filter(b => validSkus.has(b.item_sku))
     })
 
-    const loadData = async () => {
-      try {
-        loading.value = true
+    // run() drops results of superseded requests (stale filter responses)
+    const loadData = () => run(
+      () => {
         const filters = getCurrentFilters()
-
-        const [summaryData, ordersData, inventoryData, backlogData] = await Promise.all([
+        return Promise.all([
           api.getDashboardSummary(filters),
           api.getOrders(filters),
           api.getInventory(filters),
           api.getBacklog()
         ])
-
+      },
+      ([summaryData, ordersData, inventoryData, backlogData]) => {
         summary.value = summaryData
         allOrders.value = ordersData
         inventoryItems.value = inventoryData
         allBacklogItems.value = backlogData
-      } catch (err) {
-        error.value = 'Failed to load dashboard data: ' + err.message
-      } finally {
-        loading.value = false
       }
-    }
+    )
 
     const calculatePercentage = (value, goal) => {
       return ((value / goal) * 100).toFixed(2)
@@ -675,11 +676,14 @@ export default {
     })
 
     onMounted(loadData)
+    onBeforeUnmount(invalidate)
 
     return {
       t,
       loading,
+      refreshing,
       error,
+      loadData,
       summary,
       ordersData,
       fillRate,

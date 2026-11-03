@@ -155,8 +155,11 @@ def get_item(item_id: str):
 ### CORS Configuration
 
 **Development:**
-- Allow all origins during development (`allow_origins=["*"]`)
-- Useful for frontend dev server on different port
+- Only the local Vite frontend is allowed (`CORS_ALLOWED_ORIGINS` in `main.py`: `http://localhost:3000` and `http://127.0.0.1:3000`)
+- Credentials are off and only GET/POST/PATCH/DELETE with `Content-Type` are allowed
+- Never use `allow_origins=["*"]` together with `allow_credentials=True`: Starlette then echoes any origin, so any website could call the API through the user's browser
+- Add a new frontend origin to `CORS_ALLOWED_ORIGINS` and extend `tests/backend/test_cors.py`
+- The server binds to `127.0.0.1` (`SERVER_HOST`), not `0.0.0.0`, so the unauthenticated API is not reachable from the LAN
 
 **Production:**
 - Restrict to specific origins only
@@ -272,7 +275,7 @@ server/
 
 **Current State:**
 - No authentication (demo only)
-- CORS allows all origins
+- CORS allows only the local frontend origins; server binds to loopback
 - No rate limiting
 - No input validation beyond types
 - Suitable for local development only

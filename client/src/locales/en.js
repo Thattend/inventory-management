@@ -406,6 +406,7 @@ export default {
   common: {
     loading: 'Loading...',
     error: 'Error',
+    retry: 'Retry',
     noData: 'No data available',
     viewDetails: 'View Details',
     close: 'Close',

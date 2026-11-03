@@ -8,8 +8,11 @@
     </div>
 
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else>
+    <div v-else-if="error" class="error error-action" role="alert">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-secondary btn-sm" @click="loadForecasts">{{ t('common.retry') }}</button>
+    </div>
+    <div v-else :class="{ 'is-refreshing': refreshing }" :aria-busy="refreshing">
       <div class="demand-trend-cards">
         <div class="trend-card increasing-card">
           <div class="trend-header">
@@ -114,17 +117,19 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
+import { useLatestLoad } from '../composables/useLatestLoad'
 
 export default {
   name: 'Demand',
   setup() {
     const { t } = useI18n()
-    const loading = ref(true)
-    const error = ref(null)
+    const { loading, refreshing, error, run, invalidate } = useLatestLoad({
+      describeError: (err) => 'Failed to load demand forecasts: ' + err.message
+    })
     const allForecasts = ref([])
     const inventoryItems = ref([])
 
@@ -142,27 +147,23 @@ export default {
       return allForecasts.value.filter(f => validSkus.has(f.item_sku))
     })
 
-    const loadForecasts = async () => {
-      try {
-        loading.value = true
+    // run() drops results of superseded requests (stale filter responses)
+    const loadForecasts = () => run(
+      () => {
         const filters = getCurrentFilters()
-
-        const [forecastsData, inventoryData] = await Promise.all([
+        return Promise.all([
           api.getDemandForecasts(),
           api.getInventory({
             warehouse: filters.warehouse,
             category: filters.category
           })
         ])
-
+      },
+      ([forecastsData, inventoryData]) => {
         allForecasts.value = forecastsData
         inventoryItems.value = inventoryData
-      } catch (err) {
-        error.value = 'Failed to load demand forecasts: ' + err.message
-      } finally {
-        loading.value = false
       }
-    }
+    )
 
     // Watch for filter changes and reload data
     watch([selectedLocation, selectedCategory], () => {
@@ -212,11 +213,14 @@ export default {
     }
 
     onMounted(loadForecasts)
+    onBeforeUnmount(invalidate)
 
     return {
       t,
       loading,
+      refreshing,
       error,
+      loadForecasts,
       forecasts,
       getForecastsByTrend,
       getChangePercent,

@@ -50,13 +50,24 @@ def apply_filters(items: list, warehouse: Optional[str] = None, category: Option
 
     return filtered
 
-# CORS middleware
+# The API has no authentication, so only the local Vite frontend may call it
+# from a browser. A wildcard origin combined with credentials would make
+# Starlette echo ANY origin, letting every website the developer visits read
+# and change data (tasks, purchase orders, restock orders) through their browser.
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+# Loopback only: 0.0.0.0 would expose the unauthenticated API to the whole LAN.
+SERVER_HOST = "127.0.0.1"
+SERVER_PORT = 8001
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=CORS_ALLOWED_ORIGINS,
+    # The client sends no cookies or auth headers, so credentials stay off.
+    allow_credentials=False,
+    # Only the methods the frontend actually uses (see client/src/api.js).
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Content-Type"],
 )
 
 # Data models
@@ -456,4 +467,4 @@ def get_purchase_order(backlog_item_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)

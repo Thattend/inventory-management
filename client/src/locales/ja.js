@@ -406,6 +406,7 @@ export default {
   common: {
     loading: '読み込み中...',
     error: 'エラー',
+    retry: '再試行',
     noData: 'データがありません',
     viewDetails: '詳細を見る',
     close: '閉じる',
