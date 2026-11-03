@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    // Apply the saved/system theme before first paint so there is no light flash.
+    // Keep in sync with src/composables/useTheme.js (key + values).
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('app-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <title>Factory Inventory Management System</title>
 </head>
 <body>

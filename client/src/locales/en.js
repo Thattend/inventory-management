@@ -389,6 +389,12 @@ export default {
     errLoad: 'Failed to load purchase order'
   },
 
+  // Theme
+  theme: {
+    switchToDark: 'Switch to dark mode',
+    switchToLight: 'Switch to light mode'
+  },
+
   // Language
   language: {
     english: 'English',
