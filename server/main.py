@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import date, datetime
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Optional
-from pydantic import BaseModel, Field
-from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders
+from typing import Annotated, List, Literal, Optional
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions
+import purchasing
 import restocking
+import tasks
 
 app = FastAPI(title="Factory Inventory Management System")
 
@@ -136,6 +138,7 @@ class BacklogItem(BaseModel):
     days_delayed: int
     priority: str
     has_purchase_order: Optional[bool] = False
+    purchase_order_id: Optional[str] = None
 
 class PurchaseOrder(BaseModel):
     id: str
@@ -148,13 +151,35 @@ class PurchaseOrder(BaseModel):
     created_date: str
     notes: Optional[str] = None
 
+# Whitespace is stripped before the length check, so "   " is rejected as empty.
+TrimmedName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+
 class CreatePurchaseOrderRequest(BaseModel):
-    backlog_item_id: str
-    supplier_name: str
-    quantity: int
-    unit_cost: float
-    expected_delivery_date: str
-    notes: Optional[str] = None
+    backlog_item_id: Annotated[str, StringConstraints(min_length=1, max_length=50)]
+    supplier_name: TrimmedName
+    quantity: int = Field(gt=0, le=1_000_000)
+    unit_cost: float = Field(gt=0, le=1_000_000)
+    # Typed as date so malformed or impossible dates are rejected with 422.
+    expected_delivery_date: date
+    notes: Optional[Annotated[str, StringConstraints(max_length=1000)]] = None
+
+class Task(BaseModel):
+    # The frontend uses camelCase "dueDate"; the alias keeps the JSON contract
+    # while the Python attribute follows PEP 8.
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    title: str
+    priority: Literal["high", "medium", "low"]
+    due_date: str = Field(alias="dueDate")
+    status: Literal["pending", "completed"]
+
+class CreateTaskRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    title: TrimmedName
+    priority: Literal["high", "medium", "low"]
+    due_date: date = Field(alias="dueDate")
 
 # API endpoints
 @app.get("/")
@@ -210,8 +235,10 @@ def get_backlog():
     for item in backlog_items:
         item_dict = dict(item)
         # Check if this backlog item has a purchase order
-        has_po = any(po["backlog_item_id"] == item["id"] for po in purchase_orders)
-        item_dict["has_purchase_order"] = has_po
+        po = purchasing.find_by_backlog_item(item["id"])
+        item_dict["has_purchase_order"] = po is not None
+        # The Dashboard switches "Create PO" to "View PO" based on this id.
+        item_dict["purchase_order_id"] = po["id"] if po else None
         result.append(item_dict)
     return result
 
@@ -365,6 +392,67 @@ def create_restock_order(request: CreateRestockOrderRequest):
 def get_restock_orders():
     """List submitted restock orders, newest first."""
     return list(reversed(restocking.submitted_orders))
+
+@app.get("/api/tasks", response_model=List[Task])
+def get_tasks():
+    """List tasks, newest first."""
+    return tasks.list_tasks()
+
+@app.post("/api/tasks", response_model=Task, status_code=201)
+def create_task(request: CreateTaskRequest):
+    """Create a pending task."""
+    try:
+        return tasks.add_task(request.title, request.priority, request.due_date)
+    except tasks.TaskLimitReached as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+
+@app.patch("/api/tasks/{task_id}", response_model=Task)
+def toggle_task(task_id: str):
+    """Toggle a task between pending and completed."""
+    try:
+        return tasks.toggle_task(task_id)
+    except tasks.TaskNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+@app.delete("/api/tasks/{task_id}", response_model=Task)
+def delete_task(task_id: str):
+    """Delete a task and return it."""
+    try:
+        return tasks.delete_task(task_id)
+    except tasks.TaskNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+@app.post("/api/purchase-orders", response_model=PurchaseOrder, status_code=201)
+def create_purchase_order(request: CreatePurchaseOrderRequest):
+    """Create a purchase order for a backlog item (one per item)."""
+    if not any(item["id"] == request.backlog_item_id for item in backlog_items):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Backlog item {request.backlog_item_id} not found"
+        )
+    try:
+        return purchasing.create_order(
+            backlog_item_id=request.backlog_item_id,
+            supplier_name=request.supplier_name,
+            quantity=request.quantity,
+            unit_cost=request.unit_cost,
+            expected_delivery_date=request.expected_delivery_date,
+            notes=request.notes,
+            now=datetime.now().replace(microsecond=0),
+        )
+    except (purchasing.DuplicatePurchaseOrder, purchasing.PurchaseOrderLimitReached) as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+
+@app.get("/api/purchase-orders/{backlog_item_id}", response_model=PurchaseOrder)
+def get_purchase_order(backlog_item_id: str):
+    """Get the purchase order raised for a backlog item."""
+    po = purchasing.find_by_backlog_item(backlog_item_id)
+    if po is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Purchase order for backlog item {backlog_item_id} not found"
+        )
+    return po
 
 if __name__ == "__main__":
     import uvicorn

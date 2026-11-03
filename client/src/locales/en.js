@@ -345,6 +345,38 @@ export default {
     noTasks: 'No tasks yet. Add your first task above!'
   },
 
+  // Purchase Order Modal
+  purchaseOrder: {
+    createButton: 'Create PO',
+    viewButton: 'View PO',
+    createTitle: 'Create Purchase Order',
+    viewTitle: 'Purchase Order Details',
+    sku: 'SKU',
+    shortage: 'Shortage',
+    units: 'units',
+    supplierName: 'Supplier Name',
+    quantity: 'Quantity',
+    unitCost: 'Unit Cost',
+    expectedDelivery: 'Expected Delivery Date',
+    notes: 'Notes (optional)',
+    total: 'Total',
+    submit: 'Create Purchase Order',
+    submitting: 'Creating...',
+    status: 'Status',
+    createdDate: 'Created',
+    poId: 'PO ID',
+    errSupplierRequired: 'Supplier name is required',
+    errQuantity: 'Quantity must be a whole number greater than 0',
+    errUnitCost: 'Unit cost must be greater than 0',
+    errDateRequired: 'Expected delivery date is required',
+    errNotesLength: 'Notes must be at most 1000 characters',
+    errExists: 'A purchase order already exists for this item',
+    errNotFound: 'This backlog item could not be found',
+    errValidation: 'Please check the form values and try again',
+    errGeneric: 'Failed to create purchase order. Please try again.',
+    errLoad: 'Failed to load purchase order'
+  },
+
   // Language
   language: {
     english: 'English',
