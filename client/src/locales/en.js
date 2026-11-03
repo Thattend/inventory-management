@@ -6,6 +6,7 @@ export default {
     orders: 'Orders',
     finance: 'Finance',
     demandForecast: 'Demand Forecast',
+    restocking: 'Restocking',
     companyName: 'Catalyst Components',
     subtitle: 'Inventory Management System'
   },
@@ -112,6 +113,17 @@ export default {
     onTimeDelivery: 'On-Time Delivery',
     itemsCount: '{count} items',
     quantity: 'Qty',
+    submittedOrders: {
+      title: 'Submitted Orders',
+      items: 'Items',
+      total: 'Total',
+      submittedDate: 'Submitted',
+      leadTime: 'Lead Time',
+      leadTimeDays: '{days} days',
+      expectedDelivery: 'Expected Delivery',
+      status: 'Status',
+      statusSubmitted: 'Submitted'
+    },
     table: {
       orderNumber: 'Order Number',
       orderId: 'Order ID',
@@ -127,6 +139,35 @@ export default {
       expectedDelivery: 'Expected Delivery',
       actualDelivery: 'Actual Delivery'
     }
+  },
+
+  // Restocking
+  restocking: {
+    title: 'Restocking',
+    description: 'Plan a restocking order within a budget, prioritised by forecast demand',
+    budgetTitle: 'Restocking Budget',
+    budget: 'Budget',
+    total: 'Total Cost',
+    remaining: 'Remaining Budget',
+    leadTime: 'Order Lead Time',
+    days: '{days} days',
+    recommendations: 'Recommended Items',
+    empty: 'No items can be purchased with this budget. Increase the budget to see recommendations.',
+    table: {
+      sku: 'SKU',
+      item: 'Item',
+      trend: 'Trend',
+      quantity: 'Quantity',
+      unitCost: 'Unit Cost',
+      lineTotal: 'Line Total',
+      leadTime: 'Lead Time'
+    },
+    placeOrder: 'Place Order',
+    submitting: 'Submitting...',
+    orderPlaced: 'Order {orderNumber} was submitted.',
+    viewOrder: 'View in Orders',
+    loadError: 'Failed to load restocking recommendations.',
+    submitError: 'Failed to place the order. Please try again.'
   },
 
   // Finance/Spending
@@ -302,6 +343,38 @@ export default {
     dueDate: 'Due Date',
     addTask: 'Add Task',
     noTasks: 'No tasks yet. Add your first task above!'
+  },
+
+  // Purchase Order Modal
+  purchaseOrder: {
+    createButton: 'Create PO',
+    viewButton: 'View PO',
+    createTitle: 'Create Purchase Order',
+    viewTitle: 'Purchase Order Details',
+    sku: 'SKU',
+    shortage: 'Shortage',
+    units: 'units',
+    supplierName: 'Supplier Name',
+    quantity: 'Quantity',
+    unitCost: 'Unit Cost',
+    expectedDelivery: 'Expected Delivery Date',
+    notes: 'Notes (optional)',
+    total: 'Total',
+    submit: 'Create Purchase Order',
+    submitting: 'Creating...',
+    status: 'Status',
+    createdDate: 'Created',
+    poId: 'PO ID',
+    errSupplierRequired: 'Supplier name is required',
+    errQuantity: 'Quantity must be a whole number greater than 0',
+    errUnitCost: 'Unit cost must be greater than 0',
+    errDateRequired: 'Expected delivery date is required',
+    errNotesLength: 'Notes must be at most 1000 characters',
+    errExists: 'A purchase order already exists for this item',
+    errNotFound: 'This backlog item could not be found',
+    errValidation: 'Please check the form values and try again',
+    errGeneric: 'Failed to create purchase order. Please try again.',
+    errLoad: 'Failed to load purchase order'
   },
 
   // Language
