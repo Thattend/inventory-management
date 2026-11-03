@@ -1,107 +1,17 @@
 <template>
   <div class="reports">
     <div class="page-header">
-      <h2>Performance Reports</h2>
-      <p>View quarterly performance metrics and monthly trends</p>
+      <div>
+        <h2 class="page-title">Performance Reports</h2>
+        <p class="page-description">View quarterly performance metrics and monthly trends</p>
+      </div>
     </div>
 
     <div v-if="loading" class="loading">Loading reports...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else>
-      <!-- Quarterly Performance -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Quarterly Performance</h3>
-        </div>
-        <div class="table-container">
-          <table class="reports-table">
-            <thead>
-              <tr>
-                <th>Quarter</th>
-                <th>Total Orders</th>
-                <th>Total Revenue</th>
-                <th>Avg Order Value</th>
-                <th>Fulfillment Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(q, index) in quarterlyData" :key="index">
-                <td><strong>{{ q.quarter }}</strong></td>
-                <td>{{ q.total_orders }}</td>
-                <td>${{ formatNumber(q.total_revenue) }}</td>
-                <td>${{ formatNumber(q.avg_order_value) }}</td>
-                <td>
-                  <span :class="getFulfillmentClass(q.fulfillment_rate)">
-                    {{ q.fulfillment_rate }}%
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Monthly Trends Chart -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Monthly Revenue Trend</h3>
-        </div>
-        <div class="chart-container">
-          <div class="bar-chart">
-            <div v-for="(month, index) in monthlyData" :key="index" class="bar-wrapper">
-              <div class="bar-container">
-                <div
-                  class="bar"
-                  :style="{ height: getBarHeight(month.revenue) + 'px' }"
-                  :title="'$' + formatNumber(month.revenue)"
-                ></div>
-              </div>
-              <div class="bar-label">{{ formatMonth(month.month) }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Month-over-Month Comparison -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Month-over-Month Analysis</h3>
-        </div>
-        <div class="table-container">
-          <table class="reports-table">
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th>Orders</th>
-                <th>Revenue</th>
-                <th>Change</th>
-                <th>Growth Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(month, index) in monthlyData" :key="index">
-                <td><strong>{{ formatMonth(month.month) }}</strong></td>
-                <td>{{ month.order_count }}</td>
-                <td>${{ formatNumber(month.revenue) }}</td>
-                <td>
-                  <span v-if="index > 0" :class="getChangeClass(month.revenue, monthlyData[index - 1].revenue)">
-                    {{ getChangeValue(month.revenue, monthlyData[index - 1].revenue) }}
-                  </span>
-                  <span v-else>-</span>
-                </td>
-                <td>
-                  <span v-if="index > 0" :class="getChangeClass(month.revenue, monthlyData[index - 1].revenue)">
-                    {{ getGrowthRate(month.revenue, monthlyData[index - 1].revenue) }}
-                  </span>
-                  <span v-else>-</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Summary Stats -->
+    <!-- .page-sections owns the vertical rhythm (gap) so cards/grids need no ad-hoc margins -->
+    <div v-else class="page-sections">
+      <!-- Summary Stats: KPI tiles lead the page, matching the other views -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total Revenue (YTD)</div>
@@ -120,6 +30,100 @@
           <div class="stat-value">{{ bestQuarter }}</div>
         </div>
       </div>
+      <!-- Quarterly Performance -->
+      <div class="card card--flush">
+        <div class="card-header">
+          <h3 class="card-title">Quarterly Performance</h3>
+        </div>
+        <div class="table-container">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>Quarter</th>
+                <th class="num">Total Orders</th>
+                <th class="num">Total Revenue</th>
+                <th class="num">Avg Order Value</th>
+                <th class="num">Fulfillment Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="q in quarterlyData" :key="q.quarter">
+                <td class="row-label">{{ q.quarter }}</td>
+                <td class="num">{{ q.total_orders }}</td>
+                <td class="num">${{ formatNumber(q.total_revenue) }}</td>
+                <td class="num">${{ formatNumber(q.avg_order_value) }}</td>
+                <td class="num">
+                  <span :class="getFulfillmentClass(q.fulfillment_rate)">
+                    {{ q.fulfillment_rate }}%
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Monthly Trends Chart -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Monthly Revenue Trend</h3>
+        </div>
+        <div class="chart-container">
+          <div class="bar-chart">
+            <div v-for="month in monthlyData" :key="month.month" class="bar-wrapper">
+              <div class="bar-container">
+                <div
+                  class="bar"
+                  :style="{ height: getBarHeight(month.revenue) + 'px' }"
+                  :title="'$' + formatNumber(month.revenue)"
+                ></div>
+              </div>
+              <div class="bar-label">{{ formatMonth(month.month) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Month-over-Month Comparison -->
+      <div class="card card--flush">
+        <div class="card-header">
+          <h3 class="card-title">Month-over-Month Analysis</h3>
+        </div>
+        <div class="table-container">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Orders</th>
+                <th class="num">Revenue</th>
+                <th class="num">Change</th>
+                <th class="num">Growth Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- index is still needed to compare with the previous month; the key uses the unique month -->
+              <tr v-for="(month, index) in monthlyData" :key="month.month">
+                <td class="row-label">{{ formatMonth(month.month) }}</td>
+                <td class="num">{{ month.order_count }}</td>
+                <td class="num">${{ formatNumber(month.revenue) }}</td>
+                <td class="num">
+                  <span v-if="index > 0" :class="getChangeClass(month.revenue, monthlyData[index - 1].revenue)">
+                    {{ getChangeValue(month.revenue, monthlyData[index - 1].revenue) }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
+                <td class="num">
+                  <span v-if="index > 0" :class="getChangeClass(month.revenue, monthlyData[index - 1].revenue)">
+                    {{ getGrowthRate(month.revenue, monthlyData[index - 1].revenue) }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -317,172 +321,79 @@ export default {
 </script>
 
 <style scoped>
-.reports {
-  padding: 0;
+/* Sections stacked with one consistent gap; shared margins are reset so they don't double up */
+.page-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.page-sections > .stats-grid,
+.page-sections > .card {
+  margin-bottom: 0;
 }
 
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+/* Bold first column replaces the old inline <strong> */
+.row-label {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
 }
 
-.card-header {
-  margin-bottom: 1.5rem;
+.positive-change {
+  color: var(--color-success-text);
+  font-weight: var(--weight-semibold);
+}
+.negative-change {
+  color: var(--color-danger-text);
+  font-weight: var(--weight-semibold);
 }
 
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
-}
-
-.reports-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.reports-table th {
-  background: #f8fafc;
-  padding: 0.75rem;
-  text-align: left;
-  font-weight: 600;
-  color: #64748b;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.reports-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.reports-table tr:hover {
-  background: #f8fafc;
-}
-
+/* ---------- Monthly revenue bar chart ---------- */
 .chart-container {
-  padding: 2rem 1rem;
-  min-height: 300px;
+  padding: var(--space-4) var(--space-4) var(--space-2);
 }
-
 .bar-chart {
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  height: 250px;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  /* 200px plot + room for the rotated month labels below it */
+  min-height: 260px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-12);
 }
-
 .bar-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   flex: 1;
-  max-width: 80px;
+  max-width: 80px; /* chart geometry cap, not spacing: keeps bars slim on wide screens */
+  position: relative;
 }
-
 .bar-container {
+  /* must stay 200px: getBarHeight() returns pixel heights scaled to a 200px maximum */
   height: 200px;
   display: flex;
   align-items: flex-end;
   width: 100%;
 }
-
 .bar {
   width: 100%;
-  background: linear-gradient(to top, #3b82f6, #60a5fa);
-  border-radius: 4px 4px 0 0;
-  transition: all 0.3s;
+  background: var(--color-info);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   cursor: pointer;
+  transition: background var(--transition-fast);
 }
-
 .bar:hover {
-  background: linear-gradient(to top, #2563eb, #3b82f6);
+  background: var(--color-primary-hover);
 }
-
 .bar-label {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  color: #64748b;
-  text-align: center;
-  transform: rotate(-45deg);
+  /* labels hang below the baseline, rotated so "Mon YYYY" fits under narrow bars */
+  position: absolute;
+  top: calc(100% + var(--space-4));
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
   white-space: nowrap;
-  margin-top: 1.5rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #3b82f6;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-}
-
-.stat-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.badge.success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge.danger {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.positive-change {
-  color: #16a34a;
-  font-weight: 600;
-}
-
-.negative-change {
-  color: #dc2626;
-  font-weight: 600;
-}
-
-.loading {
-  text-align: center;
-  padding: 3rem;
-  color: #64748b;
-}
-
-.error {
-  background: #fee2e2;
-  color: #991b1b;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
+  transform: rotate(-45deg);
 }
 </style>

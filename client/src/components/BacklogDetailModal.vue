@@ -13,23 +13,23 @@
           </div>
 
           <div class="modal-body">
-            <div class="shortage-header">
-              <div class="shortage-icon">
+            <div class="detail-hero">
+              <div class="hero-icon danger-icon">
                 <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
                   <path d="M24 8L24 28M24 34L24 36" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
                   <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="3"/>
                 </svg>
               </div>
-              <div class="shortage-title-section">
-                <h4 class="item-name">{{ translateProductName(backlogItem.item_name) }}</h4>
-                <div class="item-sku">SKU: {{ backlogItem.item_sku }}</div>
+              <div class="hero-title">
+                <h4 class="hero-name">{{ translateProductName(backlogItem.item_name) }}</h4>
+                <div class="hero-sku">SKU: {{ backlogItem.item_sku }}</div>
               </div>
-              <span class="priority-badge" :class="backlogItem.priority">
+              <span class="badge hero-badge" :class="backlogItem.priority">
                 {{ backlogItem.priority }} Priority
               </span>
             </div>
 
-            <div class="shortage-summary">
+            <div class="summary-grid">
               <div class="summary-card danger">
                 <div class="summary-label">Shortage Amount</div>
                 <div class="summary-value">{{ shortage }} units</div>
@@ -43,12 +43,12 @@
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">Order ID</div>
-                <div class="info-value order-id">{{ backlogItem.order_id }}</div>
+                <div class="info-value mono link-value">{{ backlogItem.order_id }}</div>
               </div>
 
               <div class="info-item">
                 <div class="info-label">Item SKU</div>
-                <div class="info-value sku">{{ backlogItem.item_sku }}</div>
+                <div class="info-value mono link-value">{{ backlogItem.item_sku }}</div>
               </div>
 
               <div class="info-item">
@@ -76,7 +76,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">Close</button>
+            <button class="btn btn-secondary" @click="close">Close</button>
           </div>
         </div>
       </div>
@@ -124,243 +124,97 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+/* ---- Modal shell: identical block in every modal component ----
+   Modals are teleported to <body>, so --z-modal (100) only has to beat the app shell
+   layers (top bar 20, sidebar 30, mobile drawer 50) defined in tokens.css. */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
+  padding: var(--space-4);
+  background: var(--color-overlay);
+  z-index: var(--z-modal);
 }
 
+/* Header and footer stay fixed; only .modal-body scrolls inside the 90vh cap */
 .modal-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-  max-width: 700px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  /* Per-modal width; tokens define no component widths, so this stays literal */
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.025em;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
+/* Square icon button, same height as .btn so the header row stays aligned */
 .close-button {
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  padding: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  transition: all 0.15s ease;
+  flex-shrink: 0;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .close-button:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.close-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem;
-}
-
-.shortage-header {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 1.5rem;
-}
-
-.shortage-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.shortage-title-section {
-  flex: 1;
-  min-width: 0;
-}
-
-.item-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 0.5rem 0;
-}
-
-.item-sku {
-  font-size: 0.875rem;
-  color: #64748b;
-  font-family: 'Monaco', 'Courier New', monospace;
-}
-
-.priority-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  flex-shrink: 0;
-}
-
-.priority-badge.high {
-  background: #fecaca;
-  color: #991b1b;
-}
-
-.priority-badge.medium {
-  background: #fed7aa;
-  color: #92400e;
-}
-
-.priority-badge.low {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.shortage-summary {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.summary-card {
-  padding: 1.25rem;
-  border-radius: 10px;
-  border: 2px solid;
-}
-
-.summary-card.danger {
-  border-color: #fecaca;
-  background: #fef2f2;
-}
-
-.summary-card.warning {
-  border-color: #fed7aa;
-  background: #fffbeb;
-}
-
-.summary-label {
-  font-size: 0.813rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-}
-
-.summary-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.summary-card.danger .summary-value {
-  color: #dc2626;
-}
-
-.summary-card.warning .summary-value {
-  color: #f59e0b;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.info-label {
-  font-size: 0.813rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
-}
-
-.info-value {
-  font-size: 0.938rem;
-  color: #0f172a;
-  font-weight: 500;
-}
-
-.info-value.order-id,
-.info-value.sku {
-  font-family: 'Monaco', 'Courier New', monospace;
-  color: #2563eb;
+  padding: var(--space-6);
 }
 
 .modal-footer {
-  padding: 1.5rem;
-  border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border);
 }
 
-.btn-secondary {
-  padding: 0.625rem 1.25rem;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-
-.btn-secondary:hover {
-  background: #e2e8f0;
-  border-color: #cbd5e1;
-}
-
-/* Modal transition animations */
+/* Modal transition: fade the overlay, scale the panel slightly */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-base);
 }
 
 .modal-enter-from,
@@ -370,11 +224,146 @@ const formatDate = (dateString) => {
 
 .modal-enter-active .modal-container,
 .modal-leave-active .modal-container {
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-base);
 }
 
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
   transform: scale(0.95);
 }
+
+/* ---- Detail layout shared by the read-only detail modals ---- */
+/* Hero row: icon tile, name + SKU (truncates), status badge pinned right */
+.detail-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding-bottom: var(--space-6);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* 64px tile = --space-12 + --space-4; soft background + semantic text color */
+.hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: calc(var(--space-12) + var(--space-4));
+  height: calc(var(--space-12) + var(--space-4));
+  border-radius: var(--radius-lg);
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
+
+.hero-icon.success-icon { background: var(--color-success-soft); color: var(--color-success); }
+.hero-icon.warning-icon { background: var(--color-warning-soft); color: var(--color-warning); }
+.hero-icon.danger-icon { background: var(--color-danger-soft); color: var(--color-danger); }
+
+.hero-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-name {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+}
+
+.hero-sku {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* Header badge reuses the shared .badge colors; only keep it from shrinking */
+.hero-badge {
+  flex-shrink: 0;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* Small stat tiles inside a modal: tinted variant of .stat-card */
+.summary-card {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.summary-card.primary { background: var(--color-info-soft); }
+.summary-card.success-card { background: var(--color-success-soft); }
+.summary-card.warning-card { background: var(--color-warning-soft); }
+.summary-card.danger-card,
+.summary-card.danger { background: var(--color-danger-soft); border-color: var(--color-danger-border); }
+.summary-card.warning { background: var(--color-warning-soft); }
+
+.summary-label {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.summary-value {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.summary-subtitle {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* auto-fit collapses to one column on narrow modals without a media query */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-5) var(--space-6);
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.info-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.info-value {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Values that sit inside the summary tiles take the tile's semantic color */
+.summary-card.danger .summary-value { color: var(--color-danger); }
+.summary-card.warning .summary-value { color: var(--color-warning-text); }
+
+/* Identifiers (order ID, SKU) highlighted in the primary color */
+.link-value { color: var(--color-primary); }
 </style>
